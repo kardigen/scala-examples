@@ -1,10 +1,11 @@
 package example5
 
-object Simulations2 extends App {
+object ParallelFifoSimulations extends App {
 
   abstract class Action() {
     val name: String
     val queueName: String
+
     def execute(): List[Action]
   }
 
@@ -42,20 +43,20 @@ object Simulations2 extends App {
     def scheduleActions(toSchedule: List[Action]): ActionQueues = {
       ((toSchedule foldLeft queues)
         ((m: ActionQueues, a: Action) =>
-          (m + (a.queueName -> (m(a.queueName).appended(a))))))
+          m + (a.queueName -> m(a.queueName).appended(a))))
     }
 
     def runNextActions(queues: ActionQueues): (List[Action], ActionQueues) = {
       val (executed: List[Action], toSchedule: List[Action]) =
         ((queues.values foldLeft(List[Action](), List[Action]()))
-          ((result: (List[Action], List[Action]), actions: List[Action]) => (result._1.appended(actions.head), (result._2 ++ actions.tail) ++ actions.head.execute() )))
+          ((result: (List[Action], List[Action]), actions: List[Action]) => (result._1.appended(actions.head), (result._2 ++ actions.tail) ++ actions.head.execute())))
       (executed, scheduleActions(toSchedule))
     }
 
     val scheduleActions: ActionQueues = scheduleActions(initialActions)
 
     def run(stepQueues: ActionQueues): List[Action] = {
-      if( stepQueues.isEmpty ){
+      if (stepQueues.isEmpty) {
         Nil
       } else {
         val (executed, queues) = runNextActions(stepQueues)
@@ -63,12 +64,19 @@ object Simulations2 extends App {
       }
     }
 
-    def run():  List[Action] = {
+    def run(): List[Action] = {
       run(scheduleActions(initialActions))
     }
   }
 
-  val simulation = new Simulation(List(GeneratorAction("Test", "TestQueue"), GeneratorAction("Test2", "TestQueue"), GeneratorAction("Test3", "TestQueue2")))
+  val simulation = new Simulation(List(
+    GeneratorAction("Test1", "TestQueue1"),
+    GeneratorAction("Test2", "TestQueue2"),
+    GeneratorAction("Test3", "TestQueue3"),
+    GeneratorAction("Test4", "TestQueue1"),
+    GeneratorAction("Test5", "TestQueue2"),
+    GeneratorAction("Test6", "TestQueue3"),
+    GeneratorAction("Test7", "TestQueue1")))
   val executed: List[Action] = simulation.run()
-  println(executed)
+  executed.foreach(println)
 }
