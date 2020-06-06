@@ -62,17 +62,17 @@ object TimeScheduledSimulations extends App {
   type ActionQueueSchedules = Map[String, Int]
 
   case class ActionScheduler(queue: ActionQueue, lastSchedules: ActionQueueSchedules) {
-    def scheduledQueue: ActionQueue = queue sortBy (_.finishesAt.getOrElse(Int.MaxValue))
+    def scheduledQueue: ActionQueue = queue.sortBy(_.finishesAt.getOrElse(Int.MaxValue))
 
     def scheduleActions(timeNow: Int, actions: ActionQueue): ActionScheduler = {
-      val (toSchedule, scheduledActions) = actions partition (_.finishesAt.isEmpty)
+      val (toSchedule, scheduledActions) = actions.partition(_.finishesAt.isEmpty)
 
-      def newActionsScheduler = ((toSchedule foldLeft ActionScheduler(List(), lastSchedules withDefaultValue timeNow))
-        ((scheduler: ActionScheduler, action: Action) => {
-          def scheduledAction = action.schedule(scheduler.lastSchedules(action.queueName))
+      def newActionsScheduler = (toSchedule.foldLeft(ActionScheduler(List(), lastSchedules withDefaultValue timeNow))
+      ((scheduler: ActionScheduler, action: Action) => {
+        def scheduledAction = action.schedule(scheduler.lastSchedules(action.queueName))
 
-          ActionScheduler(scheduledAction :: scheduler.queue, scheduler.lastSchedules + (action.queueName -> scheduledAction.finishesAt.get))
-        }))
+        ActionScheduler(scheduledAction :: scheduler.queue, scheduler.lastSchedules + (action.queueName -> scheduledAction.finishesAt.get))
+      }))
 
       ActionScheduler(scheduledActions ++ newActionsScheduler.queue, newActionsScheduler.lastSchedules)
     }
